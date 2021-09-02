@@ -1,45 +1,66 @@
+const bookContainer = document.getElementById('book-container');
+const searchFound = document.getElementById('search-found')
+const errorDiv = document.getElementById('error')
+
+const toggleSpinner = displaySpinner => {
+    document.getElementById('spinner').style.display = displaySpinner;
+}
+// search buttton funtionality
 const loadSearch = () => {
     const searchInput = document.getElementById('search-input');
     const searchText = searchInput.value;
-    searchInput.value = '';
-
+    //error handling
     if (searchText === '') {
-        alert('Please type a book name to search')
+        alert('You have to type a book name')
+        return;
     }
+    // display spinner 
+    toggleSpinner('block');
+    bookContainer.style.display = 'none'
 
-    // load url 
+    loadBooks(searchText)
+    // error handling 
+    searchInput.value = '';
+    searchFound.textContent = ''
+}
+
+// load data from api
+const loadBooks = searchText => {
     const url = `https://openlibrary.org/search.json?q=${searchText}`
     fetch(url)
         .then(res => res.json())
-        .then(data => displaySearch(data.docs))
-
+        .then(data => displaySearch(data))
 }
 
-
+// display books 
 const displaySearch = (books) => {
-    console.log(books);
-    const bookContainer = document.getElementById('book-container')
-
-    bookContainer.textContent = '';
-    books.forEach(book => {
-        // console.log(book);
-        const div = document.createElement('div')
-        div.classList.add('col-md-4')
+    // clear the container
+    bookContainer.innerHTML = '';
+    // error handle
+    if (books.numFound === 0) {
+        errorDiv.innerText = 'No results found!'
+        toggleSpinner('none');
+        return;
+    }
+    errorDiv.textContent = '';
+    searchFound.innerHTML = `
+            <p>about ${books.docs.length} results for you</p>
+        `;
+    books.docs.forEach(book => {
+        console.log(book);
+        const div = document.createElement('div');
+        div.classList.add('column')
         div.innerHTML = `
-            <div class="book-items p-3 border border-3 m-2">
-                <img src="" alt="book-thumb">
-                <h3>Book Name:- ${book.title} </h3>
-                <h4>Author Name:- ${book.author_name}</h4>
-                <h4>Publisher:- ${book.publisher} </h4>
-                <h4>First Published:- ${book.first_publish_year} </h4>
+            <div class="p-3 m-2 border border-2 rounded shadow">
+                <img class="w-100 height" src="https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg" alt="book-thumb">
+                <h5 class="my-3">Book Name:- ${book.title} </h5>
+                <h6>Author Name:- ${book.author_name}</h6>
+                <p>Publisher:- ${book.publisher} </p>
+                <h6>First Published:- ${book.first_publish_year} </h6>
             </div>
-        `
-        bookContainer.appendChild(div)
-    })
+        `;
+        bookContainer.appendChild(div);
+        toggleSpinner('none');
+        bookContainer.style.display = 'block'
+    });
 }
-/* const loadImage = () => {
-    fetch(`https://covers.openlibrary.org/b/id/${cover_i}-M.jpg`)
-        .then(res => res.json())
-        .then(data => console.log(data))
-}
-loadImage() */
